@@ -51,10 +51,10 @@ char AppDirPath[1024];	// Path of application directory
 #define CHAR_ROM_FILE DATADIR "Char ROM"
 #define DRIVE_ROM_FILE DATADIR "1541 ROM"
 #else
-#define BASIC_ROM_FILE "/rd/Basic ROM"
-#define KERNAL_ROM_FILE "/rd/Kernal ROM"
-#define CHAR_ROM_FILE "/rd/Char ROM"
-#define DRIVE_ROM_FILE "/rd/1541 ROM"
+#define BASIC_ROM_FILE "/rd/basic.rom"
+#define KERNAL_ROM_FILE "/rd/kernal.rom"
+#define CHAR_ROM_FILE "/rd/char.rom"
+#define DRIVE_ROM_FILE "/rd/1541.rom"
 #endif
 #endif
 
