@@ -4,7 +4,6 @@
  */
 #include "Version.h"
 #include <nds.h>
-#include "nds/arm9/console.h" 
 #include <sys/stat.h> 
 #include <stdio.h>
 #include <stdlib.h>

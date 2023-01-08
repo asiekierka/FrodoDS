@@ -23,9 +23,9 @@ void printdbg(char *s);
 #include <unistd.h>
 #include "file.h"
 
-#include "keyboard.raw.h"
-#include "keyboard.map.h"
-#include "keyboard.pal.h"
+#include "keyboard_map_bin.h"
+#include "keyboard_pal_bin.h"
+#include "keyboard_tiles_bin.h"
 #include "keyboard.hit.h"
 
 #define MOVE_MAX 16
@@ -216,18 +216,15 @@ char* dotextmenu()
 	
 	
  lcdSwap();
-	videoSetModeSub(MODE_0_2D | DISPLAY_BG1_ACTIVE); //sub bg 0 will be used to display keyboard tiles
-	BG_PALETTE_SUB[255] = RGB15(0,0,0);
+	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE); //sub bg 0 will be used to display keyboard tiles
 	REG_BG1CNT_SUB = BG_COLOR_16 | BG_32x32 | BG_MAP_BASE(29) | BG_TILE_BASE(1);
 	//get the map
-	map = (uint16 *) SCREEN_BASE_BLOCK_SUB(29); 
-    for(int i=0;i<1024;i++) map[i] = 7008; //blank tile
-    
-	REG_BG1VOFS_SUB = 160;//256 - (192 - 96);
-    
-	dmaCopy((uint16 *)keyboard_Palette, (uint16 *)BG_PALETTE_SUB, 32);
-	dmaCopy((uint16 *)keyboard_Map, (uint16 *)map, 1024); // *2
-	dmaCopy((uint16 *)keyboard_Tiles, (uint16 *)CHAR_BASE_BLOCK_SUB(1), 10816 );
+	map = (uint16 *) SCREEN_BASE_BLOCK_SUB(29);
+	REG_BG1VOFS_SUB = 160;//256 - (192 - 96);    
+	dmaCopy((uint16 *)keyboard_pal_bin, (uint16 *)BG_PALETTE_SUB, keyboard_pal_bin_size);
+	dmaCopy((uint16 *)keyboard_map_bin, (uint16 *)map, 1024);
+	dmaCopy((uint16 *)keyboard_tiles_bin, (uint16 *)CHAR_BASE_BLOCK_SUB(1), keyboard_tiles_bin_size);
+	dmaFillHalfWords(7008, map + 512, 1024);
  lcdSwap();	
 
 	return str;
@@ -324,12 +321,7 @@ void vblankhandler()
 		 
 }
 
-/*
- *  Connect to X server and open window
- */
 uint8* frontBuffer;
-uint8* backBuffer;
-
 
 extern void InterruptHandler(void);
 int init_graphics(void)
@@ -342,8 +334,7 @@ int init_graphics(void)
 	powerOn(POWER_ALL); 
 	// TODO: Implement blending.
 	// "BLEND_CR | BLEND_Y | BLEND_ALPHA" was set here, but these were registers...
-	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE | BG_MOSAIC_ON);  
-	
+	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);  
 
     //set the first two banks as background memory and the third as sub background memory
     //D is not used..if you need a bigger background then you will need to map
@@ -358,8 +349,7 @@ int init_graphics(void)
 
         frontBuffer = (uint8*)(0x06000000);
 
-   bufmem = (uint8*)malloc(512*512);
-   backBuffer = (uint8*)malloc(512*512);
+   bufmem = (uint8*)malloc(512*DISPLAY_Y);
 
 	if (!fatInitDefault())
 	{
@@ -386,10 +376,7 @@ int init_graphics(void)
 int counta,firsttime;
 void WaitForVblank()
 {
-	// TODO: Save battery by halting
-	while(REG_VCOUNT!=192);
-	while(REG_VCOUNT==192);
-	//swiWaitForVBlank(); 
+	swiWaitForVBlank(); 
 } 
  
 /*
@@ -402,8 +389,8 @@ void C64Display::Update(void)
 
 	//dmaCopyAsynch(bufmem,frontBuffer, 512*512);
 	//memcpy(frontBuffer,bufmem, 512*512);
-	DC_FlushRange(bufmem, 512*512);
-	dmaCopy(bufmem,frontBuffer, (512*512));
+	DC_FlushRange(bufmem, 512*DISPLAY_Y);
+	dmaCopy(bufmem,frontBuffer, (512*DISPLAY_Y));
 	//counta++;
 	//printf("count =%d\n",counta);
 	//if( (counta >200) && firsttime==0)
@@ -579,6 +566,7 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
 //	}
 
 	scanKeys();
+	printf("keysHeld %d\n", keysHeld());
 
         if (lastc64key >-1 )
           KeyRelease(lastc64key, key_matrix, rev_matrix); 
@@ -587,12 +575,14 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
 			touchRead(&m_tp);
 		} else if (keysUp() & KEY_TOUCH) {
 			unsigned short c;
-			unsigned int tilex, tiley;
+			int tilex, tiley;
 
 			tilex = m_tp.px/8;
-			tiley = (m_tp.px - 96)/8;
+			tiley = (m_tp.py - 96)/8;
 
-			if(tilex>=1 && tilex<=31 && tiley<=12)
+			iprintf("pressed %d %d\n", tilex, tiley);
+
+			if(tilex>=1 && tilex<=31 && tiley>=0 && tiley<=12)
 			{
 				if(m_Mode==KB_NORMAL)
 					c = keyboard_Hit[tilex+(tiley*32)];
@@ -624,10 +614,10 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
 				if(c==SLK || c==SHF)
 				{
 					if(m_Mode==KB_NORMAL) {
-						dmaCopy((uint16 *)keyboard_Map,(uint16 *)map, 1024);
+						dmaCopy((uint16 *)keyboard_map_bin,(uint16 *)map, 1024);
 						m_Mode = KB_SHIFT;
 					} else {
-						dmaCopy((uint16 *)keyboard_Map+512,(uint16 *)map, 1024);
+						dmaCopy(((uint16 *)keyboard_map_bin) + 512,(uint16 *)map, 1024);
 						m_Mode = KB_NORMAL;
 					}
 				} else 
@@ -779,7 +769,7 @@ void C64Display::InitColors(uint8 *colors)
  *  Show a requester (error message)
  */
 
-long int ShowRequester(char *a,char *b,char *)
+long int ShowRequester(const char *a, const char *b, const char *)
 {
 	iprintf("%s: %s\n", a, b);
 	return 1;

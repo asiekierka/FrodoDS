@@ -107,23 +107,10 @@ void C64::Run(void)
 	thread_func();
 }
 
-//static int key_prev = 0;
-//static int key_curr = 0;
-//
-//#define key_poll() { key_prev=key_curr; key_curr = REG_KEYINPUT; }
-//#define key_transit(key) ((key_curr^key_prev) & key)
-//#define key_held(key) (~(key_curr|key_prev) & key)
-//#define key_hit(key) ((~key_curr&key_prev) & key)
-//#define key_released(key) ((key_curr&~key_prev) & key)
-
-void poll_input(){
-
-}
-
 char kbd_feedbuf[255];
 int kbd_feedbuf_pos;
 
-void kbd_buf_feed(char *s) {
+void kbd_buf_feed(const char *s) {
 	strcpy(kbd_feedbuf, s);
 	kbd_feedbuf_pos=0;
 }
@@ -160,7 +147,7 @@ void C64::VBlank(bool draw_frame)
 {
 	double elapsed_time, speed_index;
 
-	poll_input();
+	scanKeys();
 	kbd_buf_update(this);
 
 	TheDisplay->PollKeyboard(TheCIA1->KeyMatrix, TheCIA1->RevMatrix, &joykey);
@@ -222,8 +209,6 @@ uint8 C64::poll_joystick(int port)
     	TheDisplay->KeyRelease(MATRIX(7,4), TheCIA1->KeyMatrix, TheCIA1->RevMatrix); 
 	 space=0;
     }
-    //key_poll();
-	scanKeys();
 	u32 keys= keysHeld();
     u32 rkeys = keysUp();
 
@@ -339,7 +324,7 @@ void C64::thread_func(void)
 	
 		if(have_a_break)
         {
-			poll_input();
+			scanKeys();
 //			consolePrintf("&");
 			TheDisplay->BufSwap();
 			continue; 

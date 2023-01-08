@@ -28,7 +28,9 @@ all: checkarm7 checkarm9 $(TARGET).nds
 #---------------------------------------------------------------------------------
 $(TARGET).nds	:	checkarm7 checkarm9
 	#ndstool -c $(TARGET).nds -b C64_icon.bmp "C64 Emu" -7 $(TARGET).arm7 -9 $(TARGET).arm9
-	ndstool -c $(TARGET).nds -7 arm7/$(TARGET).arm7.elf -9 arm9/$(TARGET).arm9.elf \
+	ndstool -c $(TARGET).nds \
+		-9 arm9/$(TARGET).arm9.elf \
+		-7 arm7/$(TARGET).arm7.elf \
 		-b C64_icon.bmp "FrodoDS"
 	#dsbuild $(TARGET).nds
 	#padbin 512 $(TARGET).ds.gba
