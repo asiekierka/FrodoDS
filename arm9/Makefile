@@ -24,12 +24,12 @@ DATA		:=  data
 #---------------------------------------------------------------------------------
 ARCH	:=	-marm -mthumb-interwork
 
-CFLAGS	:=	-g -Wall -O2 -Wno-narrowing \
+CFLAGS	:=	-g -Wall -O3 -flto -Wno-narrowing \
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
 			-ffast-math \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM9 -D__NDS__=1 -DPRECISE_CPU_CYCLES=0 -DPRECISE_CIA_CYCLES=0 -DPC_IS_POINTER=0 #-DGLOBAL_VARS=1
+CFLAGS	+=	$(INCLUDE) -DARM9 -D__NDS__=1 -DPRECISE_CPU_CYCLES=0 -DPRECISE_CIA_CYCLES=0 -DPC_IS_POINTER=1 -DGLOBAL_VARS=1
 CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH) -march=armv5te -mtune=arm946e-s
@@ -39,7 +39,7 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lfat -lnds9
+LIBS	:= -lmm9 -lfat -lnds9
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

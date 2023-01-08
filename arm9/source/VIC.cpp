@@ -1543,6 +1543,7 @@ static asm void fastcopy(register uchar *dst, register uchar *src)
  *  Emulate one raster line
  */
 
+ITCM_CODE
 int MOS6569::EmulateLine(void)
 {
 	int cycles_left = ThePrefs.NormalCycles;	// Cycles left for CPU

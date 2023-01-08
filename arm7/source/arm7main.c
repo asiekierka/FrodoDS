@@ -28,27 +28,8 @@
 
 ---------------------------------------------------------------------------------*/
 #include <nds.h>
+#include <maxmod7.h>
 #include <stdlib.h>
-#include "soundcommon.h"
-
-//---------------------------------------------------------------------------------
-void startSound(int sampleRate, const void* data, u32 bytes, u8 channel, u8 vol,  u8 pan, u8 format) {
-//---------------------------------------------------------------------------------
-	SCHANNEL_TIMER(channel)  = SOUND_FREQ(sampleRate);
-	SCHANNEL_SOURCE(channel) = (u32)data;
-	SCHANNEL_LENGTH(channel) = bytes >> 2 ;
-	SCHANNEL_CR(channel)     = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(vol) | SOUND_PAN(pan) | (format==1?SOUND_FORMAT_8BIT:SOUND_FORMAT_16BIT);
-}
-
-//---------------------------------------------------------------------------------
-s32 getFreeSoundChannel() {
-//---------------------------------------------------------------------------------
-	int i;
-	for (i=0; i<16; i++) {
-		if ( (SCHANNEL_CR(i) & SCHANNEL_ENABLE) == 0 ) return i;
-	}
-	return -1;
-}
 
 //---------------------------------------------------------------------------------
 void VcountHandler() {
@@ -59,32 +40,7 @@ void VcountHandler() {
 //---------------------------------------------------------------------------------
 void VblankHandler(void) {
 //---------------------------------------------------------------------------------
-	/* u32 i;
-
-	SoundVBlankIrq();
-
-	//sound code  :)
-	TransferSound *snd = IPC->soundData;
-	IPC->soundData = 0;
-
-	if (0 != snd) {
-
-		for (i=0; i<snd->count; i++) {
-			s32 chan = getFreeSoundChannel();
-
-			if (chan >= 0) {
-				startSound(snd->data[i].rate, snd->data[i].data, snd->data[i].len, chan, snd->data[i].vol, snd->data[i].pan, snd->data[i].format);
-			}
-		}
-	} */
-}
-void FiFoHandler(void) 
-//---------------------------------------------------------------------------------
-{
-	/* while ( !(REG_IPC_FIFO_CR & (IPC_FIFO_RECV_EMPTY)) )
-	{
-		SoundFifoHandler();
-	} */
+	
 }
 
 volatile bool exitflag = false;
@@ -101,7 +57,7 @@ int main(int argc, char ** argv) {
 	// clear sound registers
 	dmaFillWords(0, (void*)0x04000400, 0x100);
 
-	REG_SOUNDCNT |= SOUND_ENABLE | SOUND_VOL(0x7F);
+	REG_SOUNDCNT |= SOUND_ENABLE;
 	writePowerManagement(PM_CONTROL_REG, ( readPowerManagement(PM_CONTROL_REG) & ~PM_SOUND_MUTE ) | PM_SOUND_AMP );
 	powerOn(POWER_SOUND);
 
@@ -113,6 +69,8 @@ int main(int argc, char ** argv) {
 	initClockIRQ();
 	fifoInit();
 	touchInit();
+
+	mmInstall(FIFO_MAXMOD);
 
 	SetYtrigger(80);
 

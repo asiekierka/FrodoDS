@@ -6,6 +6,7 @@
  *  Unix stuff by Bernd Schmidt/Lutz Vieweg
  */
 
+#include "Prefs.h"
 #include "main.h"
 extern "C" {
 
@@ -21,13 +22,14 @@ extern "C" {
 
 #define MATRIX(a,b) (((a) << 3) | (b))
 
-#define timers2ms(tlow,thigh)(tlow | (thigh<<16)) >> 5
+#define timers2ms(tlow,thigh) (tlow | (thigh<<16))
+#define TICKS_PER_SEC (BUS_CLOCK >> 6)
 
 void StartTimers(void) 
 { 
    TIMER0_DATA=0; 
    TIMER1_DATA=0; 
-   TIMER0_CR=TIMER_DIV_1024|TIMER_ENABLE; 
+   TIMER0_CR=TIMER_DIV_64|TIMER_ENABLE; 
    TIMER1_CR=TIMER_CASCADE|TIMER_ENABLE;
 } 
 
@@ -163,13 +165,15 @@ void C64::VBlank(bool draw_frame)
 		TheDisplay->BufSwap();
 
 		 //calculate time between vblanks
+		int timeExpected=TICKS_PER_SEC*ThePrefs.SkipFrames/50;
+		int timeTo=time_start+timeExpected;
 		int time=GetTicks()-time_start;
-		elapsed_time=(double)time*(1000000/CLOCKS_PER_SEC);
-		speed_index=20000/(elapsed_time+1)*ThePrefs.SkipFrames*100;
 		time_start=GetTicks();
 
+		speed_index=timeExpected*100/time;
+
 		if((speed_index>100) && ThePrefs.LimitSpeed) {
-			usleep((unsigned long)(ThePrefs.SkipFrames*20000-elapsed_time));
+			while((uint32)timers2ms(TIMER0_DATA, TIMER1_DATA)<timeTo); 
 			speed_index=100;
 		}
 
@@ -177,7 +181,7 @@ void C64::VBlank(bool draw_frame)
 
 		// calculate fps
 		total_frames++;
-		long emu_fps=(total_frames/(((GetTicks()+1)/CLOCKS_PER_SEC)+1))*100;
+		long emu_fps=(total_frames/(((GetTicks()+1)/TICKS_PER_SEC)+1))*100;
 		//char a[100];
 		//sprintf(a,"fps %d\n",emu_fps);
   //      consolePrintf(a);
@@ -194,8 +198,7 @@ extern char* dotextmenu();
 void C64::open_close_joysticks(int oldjoy1, int oldjoy2, int newjoy1, int newjoy2)
 {
 }
- 
-//#include "BRUCELEE_bin.h" 
+  
 /*
  *  Poll joystick port, return CIA mask 
  */

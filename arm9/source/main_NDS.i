@@ -52,14 +52,16 @@ int main(int argc, char **argv)
  
 //consolePrintf("\tFrodo ArgvReceived\n");
 	
-	ThePrefs.SkipFrames=3;
+	ThePrefs.SkipFrames=isDSiMode() ? 2 : 3;
 	ThePrefs.SIDFilters=true;
 	ThePrefs.SIDType=SIDTYPE_DIGITAL;
-	ThePrefs.LimitSpeed=false;
+	ThePrefs.LimitSpeed=true;
 	ThePrefs.Emul1541Proc=false;
 	ThePrefs.FastReset=true;
 
 //   consolePrintf("\tFrodo ThePrefs\n");
+
+	keysSetRepeat(15, 6);
 
 	the_app->ReadyToRun();
 	delete the_app;
@@ -115,13 +117,8 @@ void Frodo::ReadyToRun(void)
 	// Create and start C64
 	TheC64 = new C64;
 	
-//consoleClear();
-//	consolePrintf("\tLoading Roms\n");	
-//	consolePrintf("\tLoading Roms2\n");
-//	if (load_rom_files())
-    load_rom_files();	
-//	consolePrintf("\tROMS LOADED\n");	 
-		TheC64->Run();
+    load_rom_files();	 
+	TheC64->Run();
 	delete TheC64;
 }
 

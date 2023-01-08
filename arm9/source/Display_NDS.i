@@ -83,7 +83,7 @@ void ClearScreen(bool debugMode)
 	consoleSetWindow(cons, 0, 0, 32, 24);
 	consoleClear();
 	if (debugMode) {
-		consoleSetWindow(cons, 0, 0, 32, 12);
+		consoleSetWindow(cons, 0, 1, 32, 11);
 	}
 }
 
@@ -418,17 +418,15 @@ void C64Display::BufSwap(void)
  *  Draw speedometer
  */
 
+int i = 0;
+
 void C64Display::Speedometer(int speed)
 {
-//	static int delay=0;
-//	if(delay>=25) {
-//		emu_speed=speed;
-//		emu_minutes=(clock()/CLOCKS_PER_SEC)/60;
-//		emu_seconds=(clock()/CLOCKS_PER_SEC)%60;
-//		delay=0;
-//	} else {
-//		delay++;
-//	}
+	if ((i++) & 0x0F) return;
+	PrintConsole *cons = consoleGetDefault();
+	consoleSetWindow(cons, 0, 0, 32, 1);
+	iprintf("\r%d%%   ", speed);
+	consoleSetWindow(cons, 0, 1, 32, 11);
 }
 
 
@@ -563,8 +561,6 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
 
 			tilex = m_tp.px/8;
 			tiley = (m_tp.py - 96)/8;
-
-			iprintf("pressed %d %d (%d %d)\n", tilex, tiley, m_tp.px, m_tp.py);
 
 			if(tilex>=1 && tilex<=31 && tiley>=0 && tiley<=12)
 			{
