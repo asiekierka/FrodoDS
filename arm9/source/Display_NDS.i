@@ -14,10 +14,8 @@
 
 void printdbg(char *s);
 #include <nds.h>
-#include "nds/arm9/console.h" 
 #include <fat.h>
 //#include <kos/fs_ramdisk.h>
-#include "nds/registers_alt.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h> 
@@ -33,10 +31,6 @@ void printdbg(char *s);
 #include "keyboard.hit.h"
 
 #define MOVE_MAX 16
-
-#define PEN_DOWN (~IPC->buttons & (1 << 6))
-#define X_KEY (~IPC->buttons & (1 << 0))
-#define Y_KEY (~IPC->buttons & (1 << 1))
 
 #define ABS(a) (((a) < 0) ? -(a) : (a))
 #define	ROUND(f) ((u32) ((f) < 0.0 ? (f) - 0.5 : (f) + 0.5))
@@ -73,9 +67,6 @@ void printdbg(char *s);
 #define CUP	0x14 // Cursor up
 #define CDL	0x15 // Cursor left
 
-static int m_dx=0;
-static int m_dy=0;
-static u16 m_MouseDown=FALSE;
 static int m_Mode=KB_SHIFT;
 
 extern u8 col, row; // console cursor position
@@ -155,9 +146,9 @@ char* dotextmenu()
 {
 
     videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE); //sub bg 0 will be used to print text
- 	SUB_BG0_CR = BG_MAP_BASE(31);
+ 	REG_BG0CNT_SUB = BG_MAP_BASE(31);
 	BG_PALETTE_SUB[255] = RGB15(31,31,31);
-	consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31), (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
+	consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 31, 0, false, true);
 	
 	//bool loop = true;
  //   
@@ -234,12 +225,12 @@ char* dotextmenu()
  lcdSwap();
 	videoSetModeSub(MODE_0_2D | DISPLAY_BG1_ACTIVE); //sub bg 0 will be used to display keyboard tiles
 	BG_PALETTE_SUB[255] = RGB15(0,0,0);
-	SUB_BG1_CR = BG_COLOR_16 | BG_32x32 | (29 << SCREEN_SHIFT) | (1 << CHAR_SHIFT);
+	REG_BG1CNT_SUB = BG_COLOR_16 | BG_32x32 | BG_MAP_BASE(29) | BG_TILE_BASE(1);
 	//get the map
 	map = (uint16 *) SCREEN_BASE_BLOCK_SUB(29); 
     for(int i=0;i<1024;i++) map[i] = 7008; //blank tile
     
-	 SUB_BG1_Y0 = 160;//256 - (192 - 96);
+	REG_BG1VOFS_SUB = 160;//256 - (192 - 96);
     
 	dmaCopy((uint16 *)keyboard_Palette, (uint16 *)BG_PALETTE_SUB, 32);
 	dmaCopy((uint16 *)keyboard_Map, (uint16 *)map, 1024); // *2
@@ -287,7 +278,7 @@ void WaitForVblank();
   3     V   U   H   B   8   G   Y   7
   4     N   O   K   M   0   J   I   9
   5     ,   @   :   .   -   L   P   +
-  6     /   ^   =  SHR HOM  ;   *   £
+  6     /   ^   =  SHR HOM  ;   *   ï¿½
   7    R/S  Q   C= SPC  2  CTL  <-  1
 */
 
@@ -327,14 +318,14 @@ void vblankhandler()
 {
 	//if (bounce == 1 )
 	//{
-	//	 BG3_CX = (28+bounce)<<8; 
-	//	 BG3_CY = (32+bounce)<<8; 
+	//	 REG_BG3X = (28+bounce)<<8; 
+	//	 REG_BG3Y = (32+bounce)<<8; 
 	//	bounce =0;
 	//}
 	//else if (bounce == 1 )
 	//{
-	//	BG3_CX = (28+bounce)<<8; 
-	//	BG3_CY = (32+bounce)<<8;  
+	//	REG_BG3X = (28+bounce)<<8; 
+	//	REG_BG3Y = (32+bounce)<<8;  
 	//	bounce =1;
 	//}
 		 
@@ -355,32 +346,34 @@ int init_graphics(void)
 	irqSet(IRQ_VBLANK, vblankhandler);irqEnable(IRQ_VBLANK);
 
     //set the mode for 2 text layers and two extended background layers
-	powerON(POWER_ALL); 
-	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE | BG_MOSAIC_ENABLE |BLEND_CR | BLEND_Y | BLEND_ALPHA);  
+	powerOn(POWER_ALL); 
+	// TODO: Implement blending.
+	// "BLEND_CR | BLEND_Y | BLEND_ALPHA" was set here, but these were registers...
+	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE | BG_MOSAIC_ON);  
 	
 
     //set the first two banks as background memory and the third as sub background memory
     //D is not used..if you need a bigger background then you will need to map
     //more vram banks consecutivly (VRAM A-D are all 0x20000 bytes in size)
-    vramSetMainBanks(VRAM_A_MAIN_BG_0x06000000, VRAM_B_MAIN_BG_0x06020000, 
+    vramSetPrimaryBanks(VRAM_A_MAIN_BG_0x06000000, VRAM_B_MAIN_BG_0x06020000, 
                      VRAM_C_SUB_BG , VRAM_D_LCD); 
 
 	
 	///////////////set up our bitmap background///////////////////////
 	 
-	BG3_CR = BG_BMP8_256x256;
+	REG_BG3CNT = BG_BMP8_256x256;
  
 	
 	//these are rotation backgrounds so you must set the rotation attributes:
     //these are fixed point numbers with the low 8 bits the fractional part
     //this basicaly gives it a 1:1 translation in x and y so you get a nice flat bitmap
         
-        BG3_XDX = 1<<8; 
-        BG3_XDY = 0;
-        BG3_YDX = 0;
-        BG3_YDY = 1<<8;
-        BG3_CX = 0;
-        BG3_CY = 0; 
+        REG_BG3PA = 1<<8; 
+        REG_BG3PB = 0;
+        REG_BG3PC = 0;
+        REG_BG3PD = 1<<8;
+        REG_BG3X = 0;
+        REG_BG3Y = 0; 
 
         frontBuffer = (uint8*)(0x06000000);
   	dmaCopy(NDS_spalsh512_img_bin, BG_GFX, 256*256);
@@ -411,13 +404,13 @@ int init_graphics(void)
 	//strcpy(ThePrefs.DrivePath[0], dotextmenu());
 	dotextmenu();
 	
-	BG3_CR = BG_BMP8_512x512;
-	BG3_XDX = DISPLAY_X-54; //((DISPLAY_X / 256) << 8) | (DISPLAY_X % 256) ;//
-	BG3_XDY = 0;
-	BG3_YDX = 0;
-	BG3_YDY = DISPLAY_X-106;//((DISPLAY_Y / 192) << 8) | ((DISPLAY_Y % 192) + (DISPLAY_Y % 192) / 3) ;//
-	BG3_CX = 28<<8;//1<<8;//
-	BG3_CY = 32<<8;//1<<8;//
+	REG_BG3CNT = BG_BMP8_512x512;
+	REG_BG3PA = DISPLAY_X-54; //((DISPLAY_X / 256) << 8) | (DISPLAY_X % 256) ;//
+	REG_BG3PB = 0;
+	REG_BG3PC = 0;
+	REG_BG3PD = DISPLAY_X-106;//((DISPLAY_Y / 192) << 8) | ((DISPLAY_Y % 192) + (DISPLAY_Y % 192) / 3) ;//
+	REG_BG3X = 28<<8;//1<<8;//
+	REG_BG3Y = 32<<8;//1<<8;//
     
   return TRUE;
 
@@ -425,8 +418,9 @@ int init_graphics(void)
 int counta,firsttime;
 void WaitForVblank()
 {
-	while(DISP_Y!=192);
-	while(DISP_Y==192);
+	// TODO: Save battery by halting
+	while(REG_VCOUNT!=192);
+	while(REG_VCOUNT==192);
 	//swiWaitForVBlank(); 
 } 
  
@@ -570,6 +564,8 @@ void C64Display::KeyRelease(int key, uint8 *key_matrix, uint8 *rev_matrix) {
  */
 int c64_key=-1;
 int lastc64key=-1;
+touchPosition m_tp;
+
 void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joystick)
 {
 	//int key;
@@ -614,34 +610,19 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
 //		}
 //	}
 
+	scanKeys();
+
         if (lastc64key >-1 )
           KeyRelease(lastc64key, key_matrix, rev_matrix); 
         
-        if(PEN_DOWN && !m_MouseDown)
-		{
-    			m_dx = IPC->touchXpx;
-    			m_dy = IPC->touchYpx-96;
-    			m_MouseDown = TRUE;
-        } else
-		if(PEN_DOWN && m_MouseDown)
-		{
-        		int i, j;
-        		i = IPC->touchXpx;
-        		j = IPC->touchYpx-96;
-			if(ABS(i-m_dx)<MOVE_MAX && ABS(j-m_dy)<MOVE_MAX)
-			{
-        			m_dx = i;
-        			m_dy = j;
-			} else m_MouseDown = FALSE;
-                } else
-		if(!PEN_DOWN && m_MouseDown) {
-			m_MouseDown = FALSE;
-			char c, buf[2];
-
+        if(keysHeld() & KEY_TOUCH) {
+			touchRead(&m_tp);
+		} else if (keysUp() & KEY_TOUCH) {
+			unsigned short c;
 			unsigned int tilex, tiley;
 
-			tilex = m_dx/8;
-			tiley = m_dy/8;
+			tilex = m_tp.px/8;
+			tiley = (m_tp.px - 96)/8;
 
 			if(tilex>=1 && tilex<=31 && tiley<=12)
 			{
@@ -650,13 +631,6 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
 				else
 					c = keyboard_Hit_Shift[tilex+(tiley*32)];
 
-				buf[0] = c;
-				buf[1] = (char) NULL;
-				
-				/*char a[10];
-				sprintf(a,"char %d",c);
-				printdbg(a);
-				*/
 				if(c==RET) // Return
 				{
 					//consolePrintChar('\n');

@@ -9,8 +9,7 @@
 
 #include "VIC.h" 
 #include <nds.h>
-#include "nds/interrupts.h" 
-#include "soundcommon.h"
+#include "../../arm7/source/soundcommon.h"
 
 #include <stdio.h> 
 
@@ -48,7 +47,8 @@ void MixSound(void)
 {
 	int remain;
 
-	if(soundsystem->format == 8)
+	// TODO
+	/* if(soundsystem->format == 8)
 	{
 		if((soundsystem->soundcursor + soundsystem->numsamples) > soundsystem->buffersize)
 		{
@@ -73,7 +73,7 @@ void MixSound(void)
 		{
 			SoundMixCallback(&soundsystem->mixbuffer[soundsystem->soundcursor << 1],soundsystem->numsamples);
 		}
-	}
+	} */
 }
 
 void InterruptHandler(void)

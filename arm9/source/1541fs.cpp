@@ -46,11 +46,6 @@
 #include "ROlib.h"
 #endif
 
-#ifdef __NDS__
-#include <sys/stat.h> 
-#include <sys/dir.h> 
-#endif
-
 // Prototypes
 static bool match(const char *p, const char *n);
 
@@ -94,7 +89,6 @@ FSDrive::~FSDrive()
 
 bool FSDrive::change_dir(char *dirpath)
 {
-#ifndef __NDS__
 #ifndef __riscos__
 	DIR *dir;
 
@@ -114,18 +108,6 @@ bool FSDrive::change_dir(char *dirpath)
 		return true;
 	} else
 		return false;
-#endif
-#else
-	DIR_ITER* dir;
-
-   if ( (dir = diropen(dirpath)) != NULL ) { 
-		dirclose(dir); 
-		strcpy(dir_path, dirpath);
-		strncpy(dir_title, dir_path, 16);
-		return true;
-	} else
-		return false;
-
 #endif
 }
 
@@ -211,7 +193,6 @@ uint8 FSDrive::open_file(int channel, const uint8 *name, int name_len)
 	}
 
 	// Open file
-#ifndef __NDS__
 #ifndef __riscos__
 	if (chdir(dir_path))
 		set_error(ERR_NOTREADY);
@@ -239,18 +220,6 @@ uint8 FSDrive::open_file(int channel, const uint8 *name, int name_len)
 	    set_error(ERR_FILENOTFOUND);
 	  }
 	}
-#endif
-#else
-
-	char thepath[NAMEBUF_LENGTH];
-	sprintf(thepath,"%s/%s",dir_path,plain_name);
-	if ((file[channel] = fopen(thepath, mode_str)) != NULL) {
-		if (mode == FMODE_READ || mode == FMODE_M)	// Read and buffer first byte
-			read_char[channel] = fgetc(file[channel]);
-	} else
-		set_error(ERR_FILENOTFOUND);
-
-
 #endif
 
 	return ST_OK;
@@ -280,7 +249,6 @@ static bool match(const char *p, const char *n)
 
 void FSDrive::find_first_file(char *pattern)
 {
-#ifndef __NDS__
 #ifndef __riscos__
 	DIR *dir;
 	struct dirent *de;
@@ -321,28 +289,6 @@ void FSDrive::find_first_file(char *pattern)
 		}
 	} while (de.readno > 0);
 #endif
-#else
-	struct stat st; 
-	char filename[256]; 
-	DIR_ITER* dir;
-
-	// Open directory for reading and skip '.' and '..'
-	if ( (dir = diropen(dir_path)) == NULL ) { 
-		return; 
-	}
-	while (dirnext(dir, filename, &st) == 0) { 
-		if (0 == strcmp(".", filename) || 0 == strcmp("..", filename))
-		{
-			// Match found? Then copy real file name
-			if (match(pattern, filename)) {
-				strncpy(pattern, filename, NAMEBUF_LENGTH);
-				dirclose(dir);
-				return;
-			}
-		}
-	}
-	dirclose(dir);
-#endif
 }
 
 
@@ -360,7 +306,6 @@ uint8 FSDrive::open_directory(int channel, const uint8 *pattern, int pattern_len
 	int filetype;
 	bool wildflag;
 
-#ifndef __NDS__
 #ifndef __riscos__
 	DIR *dir;
 	struct dirent *de;
@@ -523,7 +468,6 @@ uint8 FSDrive::open_directory(int channel, const uint8 *pattern, int pattern_len
 #ifndef __riscos
 	// Close directory
 	closedir(dir);
-#endif
 #endif
 	return ST_OK;
 }

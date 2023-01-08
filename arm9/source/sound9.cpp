@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <malloc.h>
-#include "soundcommon.h"
+#include <nds.h>
+#include "../../arm7/source/soundcommon.h"
 
 void SoundSystemInit(u32 rate,u32 buffersize,u8 channel,u8 format)
 {
-	soundsystem->rate = rate;
+/*	soundsystem->rate = rate;
 	
 	if(format == 8) 
 		soundsystem->buffersize = buffersize;
@@ -19,19 +20,19 @@ void SoundSystemInit(u32 rate,u32 buffersize,u8 channel,u8 format)
 	soundsystem->soundcursor = 0;
 	soundsystem->numsamples = 0;
 	soundsystem->period = 0x1000000 / rate;
-	soundsystem->cmd = INIT;
+	soundsystem->cmd = INIT; */
 }
 void SoundStartMixer(void)
 {
-	soundsystem->cmd |= MIX;
+//	soundsystem->cmd |= MIX;
 }
 void SendCommandToArm7(u32 command)
 {
-    while (REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL);
+/*    while (REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL);
     if (REG_IPC_FIFO_CR & IPC_FIFO_ERROR)
     {
         REG_IPC_FIFO_CR |= IPC_FIFO_SEND_CLEAR;
     } 
     
-    REG_IPC_FIFO_TX = command;
+    REG_IPC_FIFO_TX = command; */
 }

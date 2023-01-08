@@ -37,7 +37,7 @@ typedef struct
 	s16 period;
 }S_SoundSystem;
 
-#define soundsystem ((S_SoundSystem*)((u32)(IPC)+sizeof(TransferRegion)))
+// #define soundsystem ((S_SoundSystem*)((u32)(IPC)+sizeof(TransferRegion)))
 
 #ifdef ARM9
 extern void SoundSystemInit(u32 rate,u32 buffersize,u8 channel,u8 format);

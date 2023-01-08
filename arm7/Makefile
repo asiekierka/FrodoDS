@@ -32,9 +32,8 @@ CFLAGS	:=	-g -Wall -O2\
 CFLAGS	+=	$(INCLUDE) -DARM7
 CXXFLAGS	:=	$(CFLAGS)
 
-
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*).map
+LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -Wl,--nmagic -Wl,-Map,$(notdir $*).map
 
 LIBS	:= -lnds7
 

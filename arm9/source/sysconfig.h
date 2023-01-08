@@ -1,16 +1,16 @@
 /* sysconfig.h.in.  Generated from configure.in by autoheader.  */
 
 /* Define if you have the <dirent.h> header file, and it defines `DIR'. */
-#define HAVE_DIRENT_H 0
+#define HAVE_DIRENT_H 1
 
 /* Define if you have the <fcntl.h> header file. */
-#undef HAVE_FCNTL_H
+#define HAVE_FCNTL_H 1
 
 /* Define if you have the `gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
 
 /* Define if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+#define HAVE_INTTYPES_H 1
 
 /* Define if you have the <linux/joystick.h> header file. */
 #undef HAVE_LINUX_JOYSTICK_H
@@ -19,7 +19,7 @@
 #define HAVE_MEMORY_H 1
 
 /* Define if you have the `mkdir' function. */
-#undef HAVE_MKDIR
+#define HAVE_MKDIR 1
 
 /* Define if you have the <ncurses.h> header file. */
 #undef HAVE_NCURSES_H
@@ -28,7 +28,7 @@
 #undef HAVE_NDIR_H
 
 /* Define if you have the `rmdir' function. */
-#undef HAVE_RMDIR
+#define HAVE_RMDIR 1
 
 /* Define if you have the `select' function. */
 #undef HAVE_SELECT
@@ -40,7 +40,7 @@
 #undef HAVE_STATFS
 
 /* Define if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
+#define HAVE_STDINT_H 1
 
 /* Define if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
@@ -49,7 +49,7 @@
 #undef HAVE_STRERROR
 
 /* Define if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
+#define HAVE_STRINGS_H 1
 
 /* Define if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
@@ -58,14 +58,14 @@
 #define HAVE_STRSTR 1
 
 /* Define if `st_blocks' is member of `struct stat'. */
-#undef HAVE_STRUCT_STAT_ST_BLOCKS
+#define HAVE_STRUCT_STAT_ST_BLOCKS 1
 
 /* Define if your `struct stat' has `st_blocks'. Deprecated, use
    `HAVE_STRUCT_STAT_ST_BLOCKS' instead. */
 #undef HAVE_ST_BLOCKS
 
 /* Define if you have the <sys/dir.h> header file, and it defines `DIR'. */
-#undef HAVE_SYS_DIR_H
+#define HAVE_SYS_DIR_H 1
 
 /* Define if you have the <sys/mount.h> header file. */
 #undef HAVE_SYS_MOUNT_H
@@ -74,31 +74,31 @@
 #undef HAVE_SYS_NDIR_H
 
 /* Define if you have the <sys/param.h> header file. */
-#undef HAVE_SYS_PARAM_H
+#define HAVE_SYS_PARAM_H 1
 
 /* Define if you have the <sys/select.h> header file. */
-#undef HAVE_SYS_SELECT_H
+#define HAVE_SYS_SELECT_H 1
 
 /* Define if you have the <sys/statfs.h> header file. */
 #undef HAVE_SYS_STATFS_H
 
 /* Define if you have the <sys/statvfs.h> header file. */
-#undef HAVE_SYS_STATVFS_H
+#define HAVE_SYS_STATVFS_H 1
 
 /* Define if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
+#define HAVE_SYS_STAT_H 1
 
 /* Define if you have the <sys/time.h> header file. */
-#undef HAVE_SYS_TIME_H
+#define HAVE_SYS_TIME_H 1
 
 /* Define if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
+#define HAVE_SYS_TYPES_H 1
 
 /* Define if you have the <sys/vfs.h> header file. */
 #undef HAVE_SYS_VFS_H
 
 /* Define if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
+#define HAVE_UNISTD_H 1
 
 /* Define if you have the `usleep' function. */
 #undef HAVE_USLEEP

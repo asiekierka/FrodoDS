@@ -1,7 +1,7 @@
 #include <nds.h>
 #include "soundcommon.h"
 
-void SoundVBlankIrq(void)
+/* void SoundVBlankIrq(void)
 {
 	//REG_IME = 0;
 	int channel,i;
@@ -110,4 +110,4 @@ void SendCommandToArm9(u32 command)
     } 
     
     REG_IPC_FIFO_TX = command;
-}
+} */

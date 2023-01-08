@@ -87,8 +87,8 @@ void showFileList() {
 
 	struct fileEntry *entry = fileList;
 	
-	char *position = "\x1b[00;00H";
-
+	char position[8];
+	strcpy(position, "\x1b[00;00H");
 	char dispname[29];
 	
 	int line = 6;
@@ -118,7 +118,7 @@ void showFileList() {
 	
 }
 
-DIR_ITER* dir;
+DIR* dir;
 
 //---------------------------------------------------------------------------------
 void getFileList() {
@@ -127,18 +127,19 @@ void getFileList() {
 	freeFileList();
 	
 	int type;
+	struct dirent *de;
 	struct stat st;
 	
-	while ( dirnext(dir, fileName, &st) == 0 ) {
-		if(st.st_mode & S_IFDIR)
+	while ( (de = readdir(dir)) ) {
+		if(de->d_type == DT_DIR)
 			type = FT_DIR;
 		else
 			type = FT_FILE;
 		
-		addFile( type, fileName );
+		addFile( type, de->d_name );
 	}
 	
-	dirclose(dir);
+	closedir(dir);
 }
 
 char *cursorPos = "\x1b[0;0H  ";
@@ -198,7 +199,7 @@ void updateCursor() {
 FILE* loadFile() {
   int keysPressed, keysReleased, keysDownNonRepeat;
   iprintf("\x1b[4;10HLoad File");
-  dir = diropen(".");
+  dir = opendir(".");
   getFileList();
   showFileList();
   // iprintf("numFiles: %d\n",numFiles);	
@@ -217,7 +218,7 @@ FILE* loadFile() {
 		
 		if ( keysPressed & KEY_B ) {
 			chdir("..");
-			dir = diropen(".");
+			dir = opendir(".");
 			getFileList();
 			showFileList();
 			cursorLine=6;
@@ -237,7 +238,7 @@ FILE* loadFile() {
 			
 			if ( file->type == FT_DIR ) {
 				chdir(file->name);
-				dir = diropen(".");
+				dir = opendir(".");
 				getFileList();
 				showFileList();
 				cursorLine=6;
