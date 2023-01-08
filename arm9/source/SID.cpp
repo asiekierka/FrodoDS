@@ -288,7 +288,7 @@ const uint32 SAMPLE_FREQ = 22050;	// Sample output frequency in Hz
 #elif defined(__NDS__)
 const uint32 SAMPLE_FREQ = 15600;
 #else
-const uint32 SAMPLE_FREQ = 15600;	// Sample output frequency in Hz
+const uint32 SAMPLE_FREQ = 32768;	// Sample output frequency in Hz
 #endif
 const uint32 SID_FREQ = 985248;		// SID frequency in Hz
 const uint32 CALC_FREQ = 50;			// Frequency at which calc_buffer is called in Hz (should be 50Hz)
