@@ -36,6 +36,8 @@ int main(int argc, char **argv)
 	Frodo *the_app;
 	char *args[]={ "Frodo", NULL };
 
+	defaultExceptionHandler();
+
 	if (!init_graphics())
 		return 0;
 		//init_graphics();

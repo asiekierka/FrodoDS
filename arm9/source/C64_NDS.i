@@ -33,7 +33,7 @@ void StartTimers(void)
    TIMER1_CR=TIMER_CASCADE|TIMER_ENABLE;
 } 
 
-uint32 GetTicks(void) 
+inline uint32 GetTicks(void) 
 { 
    return timers2ms(TIMER0_DATA, TIMER1_DATA); 
 } 
@@ -94,11 +94,7 @@ void C64::c64_dtor(void)
 void C64::Run(void)
 {
 	// Reset chips
-	TheCPU->Reset();
-	TheSID->Reset();
-	TheCIA1->Reset();
-	TheCIA2->Reset();
-	TheCPU1541->Reset();
+	this->Reset();
 
 	// Patch kernal IEC routines
 	orig_kernal_1d84 = Kernal[0x1d84]; 
@@ -109,11 +105,16 @@ void C64::Run(void)
 	thread_func();
 }
 
-char kbd_feedbuf[255];
+char kbd_feedbuf[256];
 int kbd_feedbuf_pos;
 
 void kbd_buf_feed(const char *s) {
-	strcpy(kbd_feedbuf, s);
+	strncat(kbd_feedbuf, s, 255);
+}
+
+void kbd_buf_reset(void) {
+	kbd_feedbuf[0] = 0;
+	kbd_feedbuf[255] = 0;
 	kbd_feedbuf_pos=0;
 }
 
@@ -124,6 +125,9 @@ void kbd_buf_update(C64 *TheC64) {
 		TheC64->RAM[198]=1;
 
 		kbd_feedbuf_pos++;
+	} else {
+		kbd_feedbuf_pos = 0;
+		kbd_feedbuf[0] = 0;
 	}
 }
 
@@ -166,14 +170,18 @@ void C64::VBlank(bool draw_frame)
 
 		 //calculate time between vblanks
 		int timeExpected=TICKS_PER_SEC*ThePrefs.SkipFrames/50;
-		int timeTo=time_start+timeExpected;
-		int time=GetTicks()-time_start;
-		time_start=GetTicks();
+		uint32 timeTo=time_start+timeExpected;
+		int time_end=GetTicks();
+		int time=time_end-time_start;
+		time_start=time_end;
 
 		speed_index=timeExpected*100/time;
 
-		if(ThePrefs.LimitSpeed) {
-			while((uint32)timers2ms(TIMER0_DATA, TIMER1_DATA)<timeTo); 
+		if(ThePrefs.LimitSpeed && speed_index >= 100) {
+			while(true) {
+				uint32 timeNow=GetTicks();
+				if((timeTo-timeNow)>=0x80000000) break;
+			} 
 			if(speed_index>100) speed_index=100;
 		}
 
@@ -204,6 +212,7 @@ void C64::open_close_joysticks(int oldjoy1, int oldjoy2, int newjoy1, int newjoy
  */
 int space=0;
 int switchstick=0;
+bool last_load_drive = false;
 uint8 C64::poll_joystick(int port)
 {
 	uint8 j = 0xff;
@@ -248,30 +257,50 @@ uint8 C64::poll_joystick(int port)
     {
 		Pause();
 		Prefs *prefs = new Prefs(ThePrefs);
-		char theDrivePath[256];
-		strcpy(theDrivePath, dotextmenu());
-		int len = strlen(theDrivePath);
-		if (!strcasecmp(".fss",&theDrivePath[len-4]))
+		char filePath[256];
+		bool isDrive = false;
+		strcpy(filePath, dotextmenu());
+		int len = strlen(filePath);
+		if (len>=4)
 		{
-			LoadSnapshot(theDrivePath);
-			char *p=&theDrivePath[len-4];
-			strcpy(p,".D64");
+			if (!strcasecmp(".fss",&filePath[len-4]))
+			{
+				LoadSnapshot(filePath);
+				char *p=&filePath[len-4];
+				strcpy(p,".D64");
+			}
+			else if (!strcasecmp(".prg", &filePath[len-4]) && this->KernalIsBuiltin)
+			{
+				// NDS: Hack to load .PRG files without functioning 1541 emulation.
+				isDrive = false;
+
+				FILE *file = fopen(filePath, "rb");
+				if (file != NULL) {
+					fseek(file, 0, SEEK_END);
+					int32_t flen = ftell(file) - 2;
+					fseek(file, 0, SEEK_SET);
+					uint8_t pos_low = fgetc(file);
+					uint8_t pos_high = fgetc(file);
+					uint16_t pos = (pos_high << 8) | pos_low;
+					if (flen > 65536-pos) flen = 65536-pos;
+					fread(this->RAM + pos, flen, 1, file);
+					fclose(file);
+				}
+			}
 		}
-		strcpy(prefs->DrivePath[0], theDrivePath);
+		last_load_drive = isDrive;
+		if (isDrive) {
+			strcpy(prefs->DrivePath[0], filePath);
+		}
 		this->NewPrefs(prefs);
 		ThePrefs = *prefs;
 		delete prefs;	
 		Resume();
-
-		//kbd_buf_feed("\rLOAD\"$\",8\rLIST\r"); 
-	   //kbd_buf_feed("\rPOKE 53281,7:POKE 53280,8:POKE 646,2\r");
-	   //kbd_buf_feed("\r10 PRINT \"HELLO WORLD\"\r20 GOTO 10\rRUN\r");//20 LET A=A+1: IF A < 10 THEN GOTO 10\rRUN\r");
     } 
     if( keys & KEY_R     ) 
     {
-			kbd_buf_feed("\rLOAD\"*\",8,1\rRUN\r"); 
-           //kbd_buf_feed("\r10 PRINT \"HELLO WORLD\"\r20 GOTO 10\rRUN\r");//20 LET A=A+1: IF A < 10 THEN GOTO 10\rRUN\r");      
-           //SaveSnapshot("/ram/gpf.fss");
+		if (last_load_drive) kbd_buf_feed("\rLOAD\"*\",8,1\rRUN\r"); 
+		else kbd_buf_feed("\rRUN\r");
     }               
     
     if( (keys & KEY_SELECT) && (switchstick==0))
@@ -286,9 +315,8 @@ uint8 C64::poll_joystick(int port)
     if( keys & KEY_START)
     {
 		this->PatchKernal(ThePrefs.FastReset, ThePrefs.Emul1541Proc);
-		strcpy(kbd_feedbuf, "");
-		kbd_feedbuf_pos=0;
 		this->Reset();
+		kbd_buf_reset();
 	}
 
 	return j;

@@ -40,7 +40,7 @@ void DigitalRenderer::init_sound(void)
 	mm_stream mstream;
 	memset(&mstream, 0, sizeof(mstream));
 	mstream.sampling_rate = SAMPLE_FREQ;
-	mstream.buffer_length = 0x138 * 4;
+	mstream.buffer_length = 0x138 * 2;
 	mstream.callback = SoundMixCallback;
 	mstream.format = MM_STREAM_16BIT_MONO;
 	mstream.timer = MM_TIMER2;

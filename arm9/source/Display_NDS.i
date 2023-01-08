@@ -79,11 +79,11 @@ static int keystate[256];
 
 void ClearScreen(bool debugMode)
 {
-	PrintConsole *cons = consoleGetDefault();
-	consoleSetWindow(cons, 0, 0, 32, 24);
+	consoleSetWindow(NULL, 0, 0, 32, 24);
 	consoleClear();
+	fflush(stdout);
 	if (debugMode) {
-		consoleSetWindow(cons, 0, 1, 32, 11);
+		consoleSetWindow(NULL, 0, 1, 32, 11);
 	}
 }
 
@@ -142,7 +142,7 @@ void ClearScreen(bool debugMode)
 //	}
 //
 //}
-char str[500];
+char str[300];
 int menufirsttime =0;
 int choosingfile = 1;
 char* dotextmenu()
@@ -216,9 +216,7 @@ char* dotextmenu()
 	}
 	else
 		menufirsttime=1;
-	strcpy(str,"/rd/");
-	//strcat(str, (const char*)romlist[menupos].filename);
-	strcat(str, (const char*)fileName);
+	strncpy(str, (const char*)fileName, sizeof(str));
 	
 	ClearScreen(true);
 	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE); // BG0 = debug console; BG1 = keyboard
@@ -423,10 +421,10 @@ int i = 0;
 void C64Display::Speedometer(int speed)
 {
 	if ((i++) & 0x0F) return;
-	PrintConsole *cons = consoleGetDefault();
-	consoleSetWindow(cons, 0, 0, 32, 1);
+	consoleSetWindow(NULL, 0, 0, 32, 1);
 	iprintf("\r%d%%   ", speed);
-	consoleSetWindow(cons, 0, 1, 32, 11);
+	fflush(stdout);
+	consoleSetWindow(NULL, 0, 1, 32, 11);
 }
 
 

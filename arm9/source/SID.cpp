@@ -285,12 +285,15 @@ void MOS6581::SetState(MOS6581State *ss)
 
 #if defined(AMIGA) || defined(__riscos__)
 const uint32 SAMPLE_FREQ = 22050;	// Sample output frequency in Hz
+#elif defined(__NDS__)
+const uint32 SAMPLE_FREQ = 15600;
 #else
-const uint32 SAMPLE_FREQ = 32768;	// Sample output frequency in Hz
+const uint32 SAMPLE_FREQ = 15600;	// Sample output frequency in Hz
 #endif
 const uint32 SID_FREQ = 985248;		// SID frequency in Hz
 const uint32 CALC_FREQ = 50;			// Frequency at which calc_buffer is called in Hz (should be 50Hz)
-const uint32 SID_CYCLES = SID_FREQ/SAMPLE_FREQ;	// # of SID clocks per sample frame
+const uint32 SID_CYCLES_FIX = ((SID_FREQ << 11)/SAMPLE_FREQ)<<5;	// # of SID clocks per sample frame * 65536
+const uint32 SID_CYCLES = SID_CYCLES_FIX << 16;	// # of SID clocks per sample frame
 const int SAMPLE_BUF_SIZE = 0x138*2;// Size of buffer for sampled voice (double buffered)
 
 // SID waveforms (some of them :-)
@@ -794,14 +797,14 @@ const uint16 DigitalRenderer::TriSawRectTable[0x100] = {
 #endif
 
 const uint32 DigitalRenderer::EGTable[16] = {
-	(SID_CYCLES << 16) / 9, (SID_CYCLES << 16) / 32,
-	(SID_CYCLES << 16) / 63, (SID_CYCLES << 16) / 95,
-	(SID_CYCLES << 16) / 149, (SID_CYCLES << 16) / 220,
-	(SID_CYCLES << 16) / 267, (SID_CYCLES << 16) / 313,
-	(SID_CYCLES << 16) / 392, (SID_CYCLES << 16) / 977,
-	(SID_CYCLES << 16) / 1954, (SID_CYCLES << 16) / 3126,
-	(SID_CYCLES << 16) / 3906, (SID_CYCLES << 16) / 11720,
-	(SID_CYCLES << 16) / 19531, (SID_CYCLES << 16) / 31251
+	SID_CYCLES_FIX / 9, SID_CYCLES_FIX / 32,
+	SID_CYCLES_FIX / 63, SID_CYCLES_FIX / 95,
+	SID_CYCLES_FIX / 149, SID_CYCLES_FIX / 220,
+	SID_CYCLES_FIX / 267, SID_CYCLES_FIX / 313,
+	SID_CYCLES_FIX / 392, SID_CYCLES_FIX / 977,
+	SID_CYCLES_FIX / 1954, SID_CYCLES_FIX / 3126,
+	SID_CYCLES_FIX / 3906, SID_CYCLES_FIX / 11720,
+	SID_CYCLES_FIX / 19531, SID_CYCLES_FIX / 31251
 };
 
 const uint8 DigitalRenderer::EGDRShift[256] = {
@@ -861,7 +864,7 @@ DigitalRenderer::DigitalRenderer()
 	  resonanceHP[i] = FixNo(CALC_RESONANCE_HP(i));
 	}
 	// Pre-compute the quotient. No problem since int-part is small enough
-	sidquot = (int32)((((double)SID_FREQ)*65536) / SAMPLE_FREQ);
+	sidquot = SID_CYCLES_FIX;
 	// compute lookup table for sin and cos
 	InitFixSinTab();
 #else
