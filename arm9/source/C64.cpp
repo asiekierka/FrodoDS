@@ -216,6 +216,8 @@ void C64::NewPrefs(Prefs *prefs)
 
 void C64::PatchKernal(bool fast_reset, bool emul_1541_proc)
 {
+	if (this->KernalIsBuiltin) return;
+	
 	if (fast_reset) {
 		Kernal[0x1d84] = 0xa0;
 		Kernal[0x1d85] = 0x00;

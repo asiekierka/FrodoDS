@@ -147,7 +147,7 @@ void load_prg(C64 *TheC64, uint8 *prg, int prg_size) {
 
 void C64::VBlank(bool draw_frame)
 {
-	double elapsed_time, speed_index;
+	int speed_index;
 
 	scanKeys();
 	kbd_buf_update(this);
@@ -172,9 +172,9 @@ void C64::VBlank(bool draw_frame)
 
 		speed_index=timeExpected*100/time;
 
-		if((speed_index>100) && ThePrefs.LimitSpeed) {
+		if(ThePrefs.LimitSpeed) {
 			while((uint32)timers2ms(TIMER0_DATA, TIMER1_DATA)<timeTo); 
-			speed_index=100;
+			if(speed_index>100) speed_index=100;
 		}
 
 		TheDisplay->Speedometer((int)speed_index);

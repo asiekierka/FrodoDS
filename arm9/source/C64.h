@@ -93,6 +93,7 @@ public:
 	bool LoadSIDState(FILE *f);
 	bool LoadCIAState(FILE *f);
 
+	bool KernalIsBuiltin;
 	uint8 *RAM, *Basic, *Kernal,
 		  *Char, *Color;		// C64
 	uint8 *RAM1541, *ROM1541;	// 1541

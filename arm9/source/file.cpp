@@ -86,7 +86,7 @@ void showFileList() {
 
 	struct fileEntry *entry = fileList;
 	
-	char position[8];
+	char position[10];
 	strcpy(position, "\x1b[00;00H");
 	char dispname[29];
 	
