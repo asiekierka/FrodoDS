@@ -170,3 +170,10 @@
 
 //typedef unsigned long size_t;
 
+// Use iprintf/iscanf on NDS to save ~50 KB
+#define sscanf siscanf
+#define printf iprintf
+#define fprintf fiprintf
+#define sprintf siprintf
+#define snprintf sniprintf
+#define vsnprintf vsniprintf
