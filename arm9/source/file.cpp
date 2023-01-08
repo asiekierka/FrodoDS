@@ -2,7 +2,6 @@
 // Adapted From WinterMute's fatlibtest
 
 #include <nds.h>
-#include <nds/arm9/console.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

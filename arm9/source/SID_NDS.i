@@ -83,7 +83,7 @@ void InterruptHandler(void)
 }
 void FiFoHandler(void)
 {
-	
+/*
 	u32 command;
 	while ( !(REG_IPC_FIFO_CR & (IPC_FIFO_RECV_EMPTY)) ) 
 	{
@@ -103,12 +103,13 @@ void FiFoHandler(void)
 			break;
 		}
 	}
+*/
 }
 
 
 void DigitalRenderer::init_sound(void)
 {
-	p = this;
+	/* p = this;
 	 //Try starting up the renderer
 	sndbufsize = 0x138*4;
 	sound_buffer = new int16[sndbufsize];
@@ -122,9 +123,7 @@ void DigitalRenderer::init_sound(void)
 	//irqEnable(IRQ_VBLANK);	
 
 	SoundSystemInit(SAMPLE_FREQ,sndbufsize,0,16);
-	SoundStartMixer();
-	
-
+	SoundStartMixer(); */
 }
 
 

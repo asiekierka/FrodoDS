@@ -1,2 +1,2 @@
-extern const unsigned char keyboard_Hit[];
-extern const unsigned char keyboard_Hit_Shift[];
+extern const unsigned short keyboard_Hit[];
+extern const unsigned short keyboard_Hit_Shift[];

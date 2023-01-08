@@ -10,8 +10,6 @@
 #include "C64.h" 
 #include "VIC.h" 
 
-
-
 void printdbg(char *s);
 #include <nds.h>
 #include <fat.h>
@@ -69,8 +67,6 @@ static int m_Mode=KB_SHIFT;
 
 extern u8 col, row; // console cursor position
 
-
-
 extern uint16 *screen;
 uint16 * map;
 uint8 *bufmem;
@@ -81,6 +77,15 @@ int emu_buf=0;
 
 static int keystate[256];
 
+void ClearScreen(bool debugMode)
+{
+	PrintConsole *cons = consoleGetDefault();
+	consoleSetWindow(cons, 0, 0, 32, 24);
+	consoleClear();
+	if (debugMode) {
+		consoleSetWindow(cons, 0, 0, 32, 12);
+	}
+}
 
 //int menupos = 0;
 //int menuscrollptr = 0;
@@ -142,7 +147,9 @@ int menufirsttime =0;
 int choosingfile = 1;
 char* dotextmenu()
 {
-	
+	ClearScreen(false);
+	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);
+
 	//bool loop = true;
  //   
 	//ReadDirIntoVector();
@@ -213,19 +220,15 @@ char* dotextmenu()
 	//strcat(str, (const char*)romlist[menupos].filename);
 	strcat(str, (const char*)fileName);
 	
-	
-	
- lcdSwap();
-	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE); //sub bg 0 will be used to display keyboard tiles
+	ClearScreen(true);
+	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE); // BG0 = debug console; BG1 = keyboard
 	REG_BG1CNT_SUB = BG_COLOR_16 | BG_32x32 | BG_MAP_BASE(29) | BG_TILE_BASE(1);
 	//get the map
 	map = (uint16 *) SCREEN_BASE_BLOCK_SUB(29);
 	REG_BG1VOFS_SUB = 160;//256 - (192 - 96);    
 	dmaCopy((uint16 *)keyboard_pal_bin, (uint16 *)BG_PALETTE_SUB, keyboard_pal_bin_size);
 	dmaCopy((uint16 *)keyboard_map_bin, (uint16 *)map, 1024);
-	dmaCopy((uint16 *)keyboard_tiles_bin, (uint16 *)CHAR_BASE_BLOCK_SUB(1), keyboard_tiles_bin_size);
 	dmaFillHalfWords(7008, map + 512, 1024);
- lcdSwap();	
 
 	return str;
 }
@@ -253,10 +256,6 @@ void WaitForVblank();
 //
 //}
 //
-//void ClearScreen() // Abstract this.
-//{
-//	iprintf("\x1b[2J");
-//}
 
 /*
   C64 keyboard matrix:
@@ -303,35 +302,14 @@ C64Display::~C64Display()
 void C64Display::NewPrefs(Prefs *prefs)
 {
 }
-int bounce=0;
-void vblankhandler()
-{
-	//if (bounce == 1 )
-	//{
-	//	 REG_BG3X = (28+bounce)<<8; 
-	//	 REG_BG3Y = (32+bounce)<<8; 
-	//	bounce =0;
-	//}
-	//else if (bounce == 1 )
-	//{
-	//	REG_BG3X = (28+bounce)<<8; 
-	//	REG_BG3Y = (32+bounce)<<8;  
-	//	bounce =1;
-	//}
-		 
-}
 
 uint8* frontBuffer;
 
 extern void InterruptHandler(void);
 int init_graphics(void)
 {
-	// IRQ basic setup
-	irqInit();
-	irqSet(IRQ_VBLANK, vblankhandler);irqEnable(IRQ_VBLANK);
-
     //set the mode for 2 text layers and two extended background layers
-	powerOn(POWER_ALL); 
+	powerOn(POWER_ALL_2D); 
 	// TODO: Implement blending.
 	// "BLEND_CR | BLEND_Y | BLEND_ALPHA" was set here, but these were registers...
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);  
@@ -358,6 +336,9 @@ int init_graphics(void)
 	}
 
 	chdir("/rd");
+
+	// write unchanging parts of keyboard
+	dmaCopy((uint16 *)keyboard_tiles_bin, (uint16 *)CHAR_BASE_BLOCK_SUB(1), keyboard_tiles_bin_size);
 
 	//strcpy(ThePrefs.DrivePath[0], dotextmenu());
 	dotextmenu();
@@ -519,6 +500,7 @@ void C64Display::KeyRelease(int key, uint8 *key_matrix, uint8 *rev_matrix) {
  */
 int c64_key=-1;
 int lastc64key=-1;
+bool m_tpActive=false;
 touchPosition m_tp;
 
 void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joystick)
@@ -566,21 +548,23 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
 //	}
 
 	scanKeys();
-	printf("keysHeld %d\n", keysHeld());
 
         if (lastc64key >-1 )
           KeyRelease(lastc64key, key_matrix, rev_matrix); 
         
         if(keysHeld() & KEY_TOUCH) {
 			touchRead(&m_tp);
-		} else if (keysUp() & KEY_TOUCH) {
+			m_tpActive = true;
+		} else if (m_tpActive) {
+			m_tpActive = false;
+
 			unsigned short c;
 			int tilex, tiley;
 
 			tilex = m_tp.px/8;
 			tiley = (m_tp.py - 96)/8;
 
-			iprintf("pressed %d %d\n", tilex, tiley);
+			iprintf("pressed %d %d (%d %d)\n", tilex, tiley, m_tp.px, m_tp.py);
 
 			if(tilex>=1 && tilex<=31 && tiley>=0 && tiley<=12)
 			{
