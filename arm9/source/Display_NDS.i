@@ -22,8 +22,6 @@ void printdbg(char *s);
 #include <sys/dir.h> 
 #include <unistd.h>
 #include "file.h"
-#include "NDS_spalsh512_img_bin.h"
-#include "NDS_spalsh512_pal_bin.h" 
 
 #include "keyboard.raw.h"
 #include "keyboard.map.h"
@@ -144,11 +142,6 @@ int menufirsttime =0;
 int choosingfile = 1;
 char* dotextmenu()
 {
-
-    videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE); //sub bg 0 will be used to print text
- 	REG_BG0CNT_SUB = BG_MAP_BASE(31);
-	BG_PALETTE_SUB[255] = RGB15(31,31,31);
-	consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 31, 0, false, true);
 	
 	//bool loop = true;
  //   
@@ -358,52 +351,27 @@ int init_graphics(void)
     vramSetPrimaryBanks(VRAM_A_MAIN_BG_0x06000000, VRAM_B_MAIN_BG_0x06020000, 
                      VRAM_C_SUB_BG , VRAM_D_LCD); 
 
-	
-	///////////////set up our bitmap background///////////////////////
-	 
-	REG_BG3CNT = BG_BMP8_256x256;
- 
-	
-	//these are rotation backgrounds so you must set the rotation attributes:
-    //these are fixed point numbers with the low 8 bits the fractional part
-    //this basicaly gives it a 1:1 translation in x and y so you get a nice flat bitmap
-        
-        REG_BG3PA = 1<<8; 
-        REG_BG3PB = 0;
-        REG_BG3PC = 0;
-        REG_BG3PD = 1<<8;
-        REG_BG3X = 0;
-        REG_BG3Y = 0; 
+    videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE); //sub bg 0 will be used to print text
+ 	REG_BG0CNT_SUB = BG_MAP_BASE(31);
+	BG_PALETTE_SUB[255] = RGB15(31,31,31);
+	consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 31, 0, false, true);
 
         frontBuffer = (uint8*)(0x06000000);
-  	dmaCopy(NDS_spalsh512_img_bin, BG_GFX, 256*256);
-	dmaCopy(NDS_spalsh512_pal_bin, BG_PALETTE, 256*2);      
 
    bufmem = (uint8*)malloc(512*512);
    backBuffer = (uint8*)malloc(512*512);
-   
 
-	if (!fatInitDefault())  
+	if (!fatInitDefault())
 	{
 		iprintf("Unable to initialize media device!");
 		return -1;
 	}
 
-	WaitForVblank();
-	WaitForVblank();
 	chdir("/rd");
-	//if (!ramdiskfsInitDefault())   
-	//{
-	//	iprintf("Unable to initialize ramdisk device!");
-	//	return -1;
-	//}
-
-	WaitForVblank();
-	WaitForVblank();
 
 	//strcpy(ThePrefs.DrivePath[0], dotextmenu());
 	dotextmenu();
-	
+
 	REG_BG3CNT = BG_BMP8_512x512;
 	REG_BG3PA = DISPLAY_X-54; //((DISPLAY_X / 256) << 8) | (DISPLAY_X % 256) ;//
 	REG_BG3PB = 0;
@@ -411,7 +379,7 @@ int init_graphics(void)
 	REG_BG3PD = DISPLAY_X-106;//((DISPLAY_Y / 192) << 8) | ((DISPLAY_Y % 192) + (DISPLAY_Y % 192) / 3) ;//
 	REG_BG3X = 28<<8;//1<<8;//
 	REG_BG3Y = 32<<8;//1<<8;//
-    
+
   return TRUE;
 
 }
