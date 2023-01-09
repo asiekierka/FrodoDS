@@ -70,6 +70,7 @@ extern u8 col, row; // console cursor position
 extern uint16 *screen;
 uint16 * map;
 uint8 *bufmem;
+#define BUFMEM_SIZE ((512*(DISPLAY_Y-1))+DISPLAY_X)
 
 uint8 *emu_screen;
 uint8 *emu_buffers[2];
@@ -224,8 +225,8 @@ char* dotextmenu()
 	//get the map
 	map = (uint16 *) SCREEN_BASE_BLOCK_SUB(29);
 	REG_BG1VOFS_SUB = 160;//256 - (192 - 96);    
-	dmaCopy((uint16 *)keyboard_pal_bin, (uint16 *)BG_PALETTE_SUB, keyboard_pal_bin_size);
-	dmaCopy((uint16 *)keyboard_map_bin, (uint16 *)map, 1024);
+	dmaCopyHalfWords(3, (uint16 *)keyboard_pal_bin, (uint16 *)BG_PALETTE_SUB, keyboard_pal_bin_size);
+	dmaCopyWords(3, (uint16 *)keyboard_map_bin, (uint16 *)map, 1024);
 	dmaFillHalfWords(7008, map + 512, 1024);
 
 	return str;
@@ -323,9 +324,9 @@ int init_graphics(void)
 	BG_PALETTE_SUB[255] = RGB15(31,31,31);
 	consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 31, 0, false, true);
 
-        frontBuffer = (uint8*)(0x06000000);
+	frontBuffer = (uint8*)(0x06000000);
 
-   bufmem = (uint8*)malloc(512*DISPLAY_Y);
+    bufmem = (uint8*)malloc(BUFMEM_SIZE);
 
 	if (!fatInitDefault())
 	{
@@ -336,7 +337,7 @@ int init_graphics(void)
 	chdir("/rd");
 
 	// write unchanging parts of keyboard
-	dmaCopy((uint16 *)keyboard_tiles_bin, (uint16 *)CHAR_BASE_BLOCK_SUB(1), keyboard_tiles_bin_size);
+	dmaCopyWords(3, (uint16 *)keyboard_tiles_bin, (uint16 *)CHAR_BASE_BLOCK_SUB(1), keyboard_tiles_bin_size);
 
 	//strcpy(ThePrefs.DrivePath[0], dotextmenu());
 	dotextmenu();
@@ -366,17 +367,8 @@ void C64Display::Update(void)
 {
 //	drive8active=led_state[0];
 
-	//dmaCopyAsynch(bufmem,frontBuffer, 512*512);
-	//memcpy(frontBuffer,bufmem, 512*512);
-	DC_FlushRange(bufmem, 512*DISPLAY_Y);
-	dmaCopy(bufmem,frontBuffer, (512*DISPLAY_Y));
-	//counta++;
-	//printf("count =%d\n",counta);
-	//if( (counta >200) && firsttime==0)
-	//{
-	//	strcpy(ThePrefs.DrivePath[0], dotextmenu());
-	//	firsttime=1;
-	//}
+	DC_FlushRange(bufmem, BUFMEM_SIZE);
+	dmaCopyWordsAsynch(3, bufmem, frontBuffer, BUFMEM_SIZE);
 }
 
 
@@ -592,10 +584,10 @@ void C64Display::PollKeyboard(uint8 *key_matrix, uint8 *rev_matrix, uint8 *joyst
 				if(c==SLK || c==SHF)
 				{
 					if(m_Mode==KB_NORMAL) {
-						dmaCopy((uint16 *)keyboard_map_bin,(uint16 *)map, 1024);
+						dmaCopyWords(3, (uint16 *)keyboard_map_bin,(uint16 *)map, 1024);
 						m_Mode = KB_SHIFT;
 					} else {
-						dmaCopy(((uint16 *)keyboard_map_bin) + 512,(uint16 *)map, 1024);
+						dmaCopyWords(3, ((uint16 *)keyboard_map_bin) + 512,(uint16 *)map, 1024);
 						m_Mode = KB_NORMAL;
 					}
 				} else 
