@@ -4,7 +4,7 @@ source code is obtainable from http://www.uni-mainz.de/~bauec002/FRMain.html.
 The original home page of the NDS port is http://console-news.dcemu.co.uk/Frodoc64.shtml .
 The current source code should be available from https://github.com/asiekierka/FrodoDS .
 
-Instructions
+## Instructions
 
 1. Install as follows:
   * C64 BASIC .ROM -> /rd/basic.rom
