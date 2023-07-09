@@ -16,15 +16,21 @@ Instructions
 
 Note: You might want to test the .d64 file on another version of Frodo to verify that the d64 is compatible with Frodo.
 
-While playing games, the D-Pad and A buttons are used for your joystick.
+## Controls
 
-Press SELECT to switch between port1 and port2 that the joystick is in.
+  * Left Trigger - Load Frodo Memory Snapshot or mount .D64 c64 disk image
+  * Right Trigger - automatically type `LOAD"*",8,1` and then `RUN`.
+  * START - reset
+  * SELECT - switch between port1 and port2 that the joystick is in
+  * B - space key
+  * A - fire
+  * D-Pad - Joystick directions
 
-The B button is mapped to the space key.
+## Acknowledgements
 
-Thanks and enjoy,
-Troy Davis(GPF)
-http://gpf.dcemu.co.uk
-
-thanks to headspin for the keyboard and code, thechuckster for the fat library d64 browser from his stellads port, maintainers of devkitpro and libnds and to all those in #mellowdsdev and #dsdev on efnet for there help and support.
-
+  * Troy Davis(GPF) http://gpf.dcemu.co.uk - FrodoDS initial porter
+  * Christian Bauer - Original Frodo author
+  * headspin for the keyboard and code
+  * thechuckster for the fat library d64 browser from his stellads port
+  * maintainers of devkitpro and libnds
+  * to all those in #mellowdsdev and #dsdev on efnet for there help and support
